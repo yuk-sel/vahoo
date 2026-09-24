@@ -1,0 +1,248 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Restoran İşletim Sistemi API Sözleşmesi",
+    "description": "Geliştirici A (Müşteri & QR) ve Geliştirici B (Backend & Admin) taraflarının bağımsız çalışabilmesi için hazırlanan Mock / Production API Sözleşmesi.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Yerel Geliştirme Sunucusu"
+    }
+  ],
+  "paths": {
+    "/tables/{qrCode}/menu": {
+      "get": {
+        "summary": "QR Kodu ile Menü ve Masa Bilgisini Getir",
+        "description": "Müşteri QR kodu okuttuğunda masa bilgilerini, kategorileri, ürünleri ve ürün opsiyonlarını getirir.",
+        "parameters": [
+          {
+            "name": "qrCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "qr_table_12_x89f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı Menü Yanıtı",
+            "content": {
+              "application/json": {
+                "example": {
+                  "table": {
+                    "id": "tbl_12",
+                    "number": 12,
+                    "section": "Teras",
+                    "sessionId": "sess_89234"
+                  },
+                  "categories": [
+                    {
+                      "id": "cat_burger",
+                      "name": "Burgerler",
+                      "order": 1,
+                      "products": [
+                        {
+                          "id": "prod_101",
+                          "name": "Cheeseburger",
+                          "description": "200g Dana köfte, cheddar peyniri, karamelize soğan, özel sos",
+                          "price": 280.0,
+                          "imageUrl": "https://cdn.restaurant.com/images/cheeseburger.jpg",
+                          "isAvailable": true,
+                          "allergens": ["Gluten", "Süt Ürünü"],
+                          "optionGroups": [
+                            {
+                              "id": "optg_1",
+                              "title": "Köfte Pişme Derecesi",
+                              "isRequired": true,
+                              "selectionType": "single",
+                              "options": [
+                                { "id": "opt_11", "name": "Orta", "price": 0.0 },
+                                { "id": "opt_12", "name": "İyi Pişmiş", "price": 0.0 }
+                              ]
+                            },
+                            {
+                              "id": "optg_2",
+                              "title": "Ekstralar",
+                              "isRequired": false,
+                              "selectionType": "multiple",
+                              "options": [
+                                { "id": "opt_21", "name": "Ekstra Cheddar", "price": 30.0 },
+                                { "id": "opt_22", "name": "Ekstra Füme Et", "price": 45.0 }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "summary": "Yeni Sipariş Oluştur",
+        "description": "Müşteri sepetindeki ürünleri sipariş olarak gönderir. Fiyat manipülasyonunu engellemek için fiyat bilgisi gönderilmez, backend veritabanından hesaplar.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "tableId": "tbl_12",
+                "sessionId": "sess_89234",
+                "items": [
+                  {
+                    "productId": "prod_101",
+                    "quantity": 2,
+                    "selectedOptionIds": ["opt_12", "opt_21"],
+                    "note": "Soğan olmasın lütfen."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sipariş Başarıyla Alındı",
+            "content": {
+              "application/json": {
+                "example": {
+                  "orderId": "ord_1042",
+                  "orderNumber": "#1042",
+                  "status": "pending",
+                  "totalPrice": 620.0,
+                  "createdAt": "2026-09-24T18:30:00Z",
+                  "message": "Siparişiniz alındı, mutfağa iletiliyor."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{orderId}/status": {
+      "get": {
+        "summary": "Sipariş Durumu Sorgula",
+        "description": "Müşteri ekranının canlı sipariş takibi için polling/GET isteği.",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ord_1042"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Güncel Sipariş Durumu",
+            "content": {
+              "application/json": {
+                "example": {
+                  "orderId": "ord_1042",
+                  "orderNumber": "#1042",
+                  "status": "preparing",
+                  "statusLabel": "Hazırlanıyor",
+                  "updatedAt": "2026-09-24T18:32:15Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{tableId}/waiter-call": {
+      "post": {
+        "summary": "Garson Çağır veya Hesap İstek Gönder",
+        "parameters": [
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "tbl_12"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "type": "waiter",
+                "note": "Su ve Peçete rica olunur."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Çağrı Başarıyla İletildi",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Garsonunuza bildirim iletildi."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webSockets": {
+    "summary": "WebSocket Anlık Bildirim Event Yapıları",
+    "events": {
+      "client_to_server": [
+        {
+          "event": "join_table_room",
+          "payload": { "tableId": "tbl_12" }
+        }
+      ],
+      "server_to_client": [
+        {
+          "event": "order_status_updated",
+          "description": "Müşteri ekranına düşen durum güncellemesi",
+          "payload": {
+            "orderId": "ord_1042",
+            "status": "ready",
+            "statusLabel": "Siparişiniz Hazır!"
+          }
+        },
+        {
+          "event": "new_order_received",
+          "description": "Admin ve Mutfak ekranına düşen anlık sipariş notification'ı",
+          "payload": {
+            "orderId": "ord_1042",
+            "orderNumber": "#1042",
+            "tableNumber": 12,
+            "totalPrice": 620.0,
+            "itemsCount": 2,
+            "createdAt": "2026-09-24T18:30:00Z"
+          }
+        },
+        {
+          "event": "waiter_call_received",
+          "description": "Admin ve Garson paneline düşen garson/hesap çağrısı",
+          "payload": {
+            "tableNumber": 12,
+            "type": "bill",
+            "createdAt": "2026-09-24T18:45:00Z"
+          }
+        }
+      ]
+    }
+  }
+}
