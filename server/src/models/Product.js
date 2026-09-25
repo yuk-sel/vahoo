@@ -1,0 +1,18 @@
+const pool = require('../../config/database')
+
+async function findByCategory(category_id) {
+    const result= await pool.query('SELECT * FROM products WHERE category_id =$1', [category_id]);
+    return result.rows
+    
+}
+
+async function create({category_id, name, description, price}) {
+    const result= await pool.query(
+        'INSERT INTO products (category_id, name, description, price) VALUES ($1, $2, $3, $4) RETURNING *',
+        [category_id, name, description, price]
+    )
+    return result.rows[0]
+    
+}
+
+module.exports={findByCategory, create}
