@@ -15,4 +15,9 @@ async function create({category_id, name, description, price}) {
     
 }
 
-module.exports={findByCategory, create}
+async function findById(id) {
+    const result= await pool.query('SELECT * FROM products WHERE id =$1', [id]);
+    return result.rows[0]
+}
+
+module.exports={findByCategory, create, findById}

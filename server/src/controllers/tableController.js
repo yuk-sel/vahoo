@@ -22,4 +22,17 @@ async function createTable(req, res) {
     
 }
 
-module.exports={getTables, createTable}
+async function startSession(req, res) {
+    try{
+        const id = req.params.id;
+        const session = await Tables.startSession(id);
+        res.status(200).json(session)
+
+    }
+    catch(err){
+        res.status(500).json({error: err.message})
+    }
+    
+}
+
+module.exports={getTables, createTable, startSession}
