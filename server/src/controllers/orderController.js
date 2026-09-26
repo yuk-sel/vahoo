@@ -1,3 +1,4 @@
+const { json } = require('express');
 const Order = require('../models/Order');
 
 async function createOrder(req, res) {
@@ -11,5 +12,28 @@ async function createOrder(req, res) {
     }
     
 }
+async function getOrders(req, res) {
+    try{
+        const orders = await Order.findAll()
+        res.status(200).json(orders)
+    }
+    catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
 
-module.exports={createOrder}
+async function updateOrderStatus(req, res) {
+    try{
+        const id= req.params.id;
+        const {status}= req.body;
+        const order= await Order.updateStatus(status, id)
+        res.status(200).json(order)
+
+    }
+    catch(err){
+        res.status(500).json({error: err.message})
+    }
+    
+}
+
+module.exports={createOrder, getOrders, updateOrderStatus}

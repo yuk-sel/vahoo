@@ -46,4 +46,21 @@ async function createOrder({ restaurant_id, table_id, session_id, items }) {
   }
 }
 
-module.exports = { createOrder };
+async function findAll() {
+
+  const result= await pool.query(
+    'SELECT * FROM orders ORDER BY created_at DESC'
+  );
+  return result.rows
+}
+
+async function updateStatus(status, id) {
+  const result= await pool.query(
+    'UPDATE orders SET status=$1 WHERE id=$2 RETURNING *', [status, id]
+  );
+  return result.rows[0]
+ 
+}
+
+
+module.exports = { createOrder, findAll, updateStatus };
